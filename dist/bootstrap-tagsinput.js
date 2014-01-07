@@ -228,7 +228,7 @@
       var self = this;
 
       self.options = $.extend({}, defaultOptions, options);
-      var typeahead = self.options.typeahead || {};
+      var typeahead = self.options.typeahead;
 
       // When itemValue is set, freeInput should always be false
       if (self.objectItems)
@@ -238,53 +238,8 @@
       makeOptionItemFunction(self.options, 'itemText');
       makeOptionItemFunction(self.options, 'tagClass');
 
-      // for backwards compatibility, self.options.source is deprecated
-      if (self.options.source)
-        typeahead.source = self.options.source;
-
-      if (typeahead.source && $.fn.typeahead) {
-        makeOptionFunction(typeahead, 'source');
-
-        self.$input.typeahead({
-          source: function (query, process) {
-            function processItems(items) {
-              var texts = [];
-
-              for (var i = 0; i < items.length; i++) {
-                var text = self.options.itemText(items[i]);
-                map[text] = items[i];
-                texts.push(text);
-              }
-              process(texts);
-            }
-
-            this.map = {};
-            var map = this.map,
-                data = typeahead.source(query);
-
-            if ($.isFunction(data.success)) {
-              // support for Angular promises
-              data.success(processItems);
-            } else {
-              // support for functions and jquery promises
-              $.when(data)
-               .then(processItems);
-            }
-          },
-          updater: function (text) {
-            self.add(this.map[text]);
-          },
-          matcher: function (text) {
-            return (text.toLowerCase().indexOf(this.query.trim().toLowerCase()) !== -1);
-          },
-          sorter: function (texts) {
-            return texts.sort();
-          },
-          highlighter: function (text) {
-            var regex = new RegExp( '(' + this.query + ')', 'gi' );
-            return text.replace( regex, "<strong>$1</strong>" );
-          }
-        });
+      if (typeahead && $.fn.typeahead) {
+        self.$input.typeahead(typeahead);
       }
 
       self.$container.on('click', $.proxy(function(event) {
@@ -456,12 +411,6 @@
     if (typeof options[key] !== 'function') {
       var propertyName = options[key];
       options[key] = function(item) { return item[propertyName]; };
-    }
-  }
-  function makeOptionFunction(options, key) {
-    if (typeof options[key] !== 'function') {
-      var value = options[key];
-      options[key] = function() { return value; };
     }
   }
   /**
